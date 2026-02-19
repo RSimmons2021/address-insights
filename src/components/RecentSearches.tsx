@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { getSearchHistory } from '@/lib/history';
-import { SearchHistoryItem } from '@/types';
+import { getSearchHistory, subscribeSearchHistory } from '@/lib/history';
 
 const DEFAULT_SUGGESTIONS = [
   { label: 'Hayes Valley, SF', address: 'Hayes Valley, San Francisco, CA', lat: 37.7759, lng: -122.4245 },
@@ -14,11 +13,7 @@ const DEFAULT_SUGGESTIONS = [
 
 export default function RecentSearches() {
   const router = useRouter();
-  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
-
-  useEffect(() => {
-    setHistory(getSearchHistory());
-  }, []);
+  const history = useSyncExternalStore(subscribeSearchHistory, getSearchHistory, () => []);
 
   const navigateTo = (address: string, lat: number, lng: number) => {
     const params = new URLSearchParams({
@@ -29,7 +24,7 @@ export default function RecentSearches() {
     router.push(`/insights?${params.toString()}`);
   };
 
-  const handleHistoryClick = (item: SearchHistoryItem) => {
+  const handleHistoryClick = (item: (typeof history)[number]) => {
     navigateTo(item.address, item.lat, item.lng);
   };
 

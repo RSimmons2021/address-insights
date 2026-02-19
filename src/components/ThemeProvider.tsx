@@ -8,31 +8,35 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({ isDark: false, toggle: () => {} });
+const THEME_STORAGE_KEY = 'theme';
+
+function getInitialIsDark(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === 'dark') return true;
+  if (stored === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
 
 export function useTheme() {
   return useContext(ThemeContext);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(getInitialIsDark);
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = stored === 'dark' || (!stored && prefersDark);
-    setIsDark(shouldBeDark);
-    if (shouldBeDark) document.documentElement.classList.add('dark');
-  }, []);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
 
   const toggle = () => {
     setIsDark((prev) => {
       const next = !prev;
       if (next) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+        localStorage.setItem(THEME_STORAGE_KEY, 'dark');
       } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
+        localStorage.setItem(THEME_STORAGE_KEY, 'light');
       }
       return next;
     });

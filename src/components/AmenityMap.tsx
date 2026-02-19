@@ -15,6 +15,29 @@ interface AmenityMapProps {
   addressLabel: string;
 }
 
+function createAddressPopupContent(addressLabel: string): HTMLDivElement {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'font-weight:700;font-size:13px;padding:4px 0';
+  wrapper.textContent = addressLabel;
+  return wrapper;
+}
+
+function createAmenityPopupContent(amenity: Amenity): HTMLDivElement {
+  const wrapper = document.createElement('div');
+  wrapper.style.padding = '4px 0';
+
+  const name = document.createElement('div');
+  name.style.cssText = 'font-weight:700;font-size:13px';
+  name.textContent = amenity.name;
+
+  const meta = document.createElement('div');
+  meta.style.cssText = 'font-size:12px;color:#86868B';
+  meta.textContent = `${amenity.category} - ${amenity.distance}m`;
+
+  wrapper.append(name, meta);
+  return wrapper;
+}
+
 export default function AmenityMap({
   lat,
   lng,
@@ -103,8 +126,8 @@ export default function AmenityMap({
     new mapboxgl.Marker({ element: el })
       .setLngLat([lng, lat])
       .setPopup(
-        new mapboxgl.Popup({ offset: 15, closeButton: false }).setHTML(
-          `<div style="font-weight:700;font-size:13px;padding:4px 0">${addressLabel}</div>`
+        new mapboxgl.Popup({ offset: 15, closeButton: false }).setDOMContent(
+          createAddressPopupContent(addressLabel)
         )
       )
       .addTo(map);
@@ -157,11 +180,8 @@ export default function AmenityMap({
       `;
       el.textContent = AMENITY_ICONS[amenity.category];
 
-      const popup = new mapboxgl.Popup({ offset: 15, closeButton: false }).setHTML(
-        `<div style="padding:4px 0">
-          <div style="font-weight:700;font-size:13px">${amenity.name}</div>
-          <div style="font-size:12px;color:#86868B">${amenity.category} &middot; ${amenity.distance}m</div>
-        </div>`
+      const popup = new mapboxgl.Popup({ offset: 15, closeButton: false }).setDOMContent(
+        createAmenityPopupContent(amenity)
       );
 
       const marker = new mapboxgl.Marker({ element: el })

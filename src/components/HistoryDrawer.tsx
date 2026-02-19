@@ -1,21 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getSearchHistory, clearHistory } from '@/lib/history';
-import { SearchHistoryItem } from '@/types';
+import { getSearchHistory, clearHistory, subscribeSearchHistory } from '@/lib/history';
 
 export default function HistoryDrawer() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
+  const history = useSyncExternalStore(subscribeSearchHistory, getSearchHistory, () => []);
 
-  useEffect(() => {
-    setHistory(getSearchHistory());
-  }, [open]);
-
-  const handleClick = (item: SearchHistoryItem) => {
+  const handleClick = (item: (typeof history)[number]) => {
     const params = new URLSearchParams({
       address: item.address,
       lat: item.lat.toString(),
@@ -27,7 +22,6 @@ export default function HistoryDrawer() {
 
   const handleClear = () => {
     clearHistory();
-    setHistory([]);
   };
 
   const shortLabel = (address: string) => {
@@ -35,14 +29,13 @@ export default function HistoryDrawer() {
     return parts.length > 1 ? `${parts[0]},${parts[1]}` : parts[0];
   };
 
-  const timeAgo = (ts: number) => {
-    const diff = Date.now() - ts;
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+  const formatTimestamp = (ts: number) => {
+    return new Date(ts).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -142,7 +135,7 @@ export default function HistoryDrawer() {
                         {shortLabel(item.address)}
                       </span>
                       <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {timeAgo(item.timestamp)}
+                        {formatTimestamp(item.timestamp)}
                       </span>
                     </div>
                   </motion.button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { searchAddresses, geocodeAddress } from '@/lib/geocode';
@@ -14,6 +14,7 @@ export default function SearchBar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
@@ -144,7 +145,13 @@ export default function SearchBar() {
           className="flex-1 border-none bg-transparent text-xl font-medium outline-none placeholder:text-[var(--text-secondary)]"
           style={{ color: 'var(--text-primary)' }}
           aria-label="Search for an address"
+          aria-autocomplete="list"
+          aria-controls={listboxId}
           aria-expanded={showSuggestions}
+          aria-activedescendant={
+            selectedIndex >= 0 ? `${listboxId}-option-${selectedIndex}` : undefined
+          }
+          aria-haspopup="listbox"
           role="combobox"
         />
         {loading && (
@@ -184,10 +191,12 @@ export default function SearchBar() {
               boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
               border: '1px solid rgba(255,255,255,0.1)',
             }}
+            id={listboxId}
             role="listbox"
           >
             {suggestions.map((s, i) => (
               <motion.div
+                id={`${listboxId}-option-${i}`}
                 key={s.id}
                 onClick={() => handleSelectSuggestion(s)}
                 className="px-6 py-4 cursor-pointer flex items-center gap-3 transition-colors"
