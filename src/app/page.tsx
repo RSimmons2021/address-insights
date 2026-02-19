@@ -28,7 +28,7 @@ export default function LandingPage() {
         <motion.div
           className="w-[100px] h-[100px] rounded-[32px] text-[40px] flex items-center justify-center text-white font-bold animate-float"
           style={{
-            background: 'var(--clay-blue)',
+            background: 'var(--clay-green)',
             boxShadow:
               'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.15)',
           }}
@@ -41,7 +41,7 @@ export default function LandingPage() {
         <motion.div
           className="w-[120px] h-[120px] rounded-[40px] text-[48px] flex items-center justify-center text-white font-bold animate-float-delayed -mt-5"
           style={{
-            background: 'var(--clay-orange)',
+            background: 'var(--clay-blue)',
             boxShadow:
               'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.15)',
           }}
@@ -49,12 +49,12 @@ export default function LandingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: 'spring' }}
         >
-          📍
+          🚗
         </motion.div>
         <motion.div
           className="w-[90px] h-[90px] rounded-[30px] text-[32px] flex items-center justify-center text-white font-bold animate-float-delayed-2"
           style={{
-            background: 'var(--clay-green)',
+            background: 'var(--clay-orange)',
             boxShadow:
               'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.15)',
           }}
@@ -62,7 +62,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, type: 'spring' }}
         >
-          🏡
+          🏙️
         </motion.div>
       </div>
 

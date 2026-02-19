@@ -622,19 +622,19 @@ function InsightsContent() {
                     className="px-2 py-1 rounded-full"
                     style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
                   >
-                    Best leaseability: {shortAddressLabel(bestByMetric.leaseability.address)}
+                    Best leaseability signal: {shortAddressLabel(bestByMetric.leaseability.address)}
                   </span>
                   <span
                     className="px-2 py-1 rounded-full"
                     style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
                   >
-                    Best walk: {shortAddressLabel(bestByMetric.walk.address)}
+                    Best walking score: {shortAddressLabel(bestByMetric.walk.address)}
                   </span>
                   <span
                     className="px-2 py-1 rounded-full"
                     style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
                   >
-                    Best drive: {shortAddressLabel(bestByMetric.drive.address)}
+                    Best driving score: {shortAddressLabel(bestByMetric.drive.address)}
                   </span>
                 </div>
               )}
@@ -668,14 +668,29 @@ function InsightsContent() {
                   const amenityTone = getDeltaTone(amenityDelta);
 
                   const metricRows = [
-                    { label: 'Walk', score: item.walkScore, delta: walkDelta, track: 'var(--clay-blue)' },
-                    { label: 'Drive', score: item.driveScore, delta: driveDelta, track: 'var(--clay-orange)' },
-                    { label: 'Urban', score: item.urbanIndex, delta: urbanDelta, track: 'var(--clay-purple)' },
                     {
-                      label: 'Leaseability',
+                      label: 'Walking Score',
+                      score: item.walkScore,
+                      delta: walkDelta,
+                      track: 'var(--clay-green)',
+                    },
+                    {
+                      label: 'Driving Score',
+                      score: item.driveScore,
+                      delta: driveDelta,
+                      track: 'var(--clay-blue)',
+                    },
+                    {
+                      label: 'Urban/Suburban Index',
+                      score: item.urbanIndex,
+                      delta: urbanDelta,
+                      track: 'var(--clay-orange)',
+                    },
+                    {
+                      label: 'Leaseability Signal',
                       score: item.leaseability,
                       delta: leaseDelta,
-                      track: 'var(--clay-green)',
+                      track: 'var(--clay-yellow)',
                     },
                   ];
 

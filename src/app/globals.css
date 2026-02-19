@@ -6,6 +6,7 @@
   --clay-blue: #5AC8FA;
   --clay-green: #34C759;
   --clay-orange: #FF9500;
+  --clay-yellow: #FFCC00;
   --clay-red: #FF3B30;
   --clay-purple: #AF52DE;
   --text-primary: #1D1D1F;
@@ -62,6 +63,7 @@ html.dark {
   --color-clay-blue: #5AC8FA;
   --color-clay-green: #34C759;
   --color-clay-orange: #FF9500;
+  --color-clay-yellow: #FFCC00;
   --color-clay-red: #FF3B30;
   --color-clay-purple: #AF52DE;
   --color-text-secondary: #86868B;

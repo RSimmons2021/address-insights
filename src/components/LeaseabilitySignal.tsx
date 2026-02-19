@@ -17,6 +17,8 @@ export default function LeaseabilitySignal({
   driveScore,
   amenityCount,
 }: LeaseabilitySignalProps) {
+  const leaseabilityAccent = 'var(--clay-yellow)';
+  const leaseabilityAccentBg = 'rgba(255, 204, 0, 0.2)';
   const [opsMode, setOpsMode] = useState(false);
   const motionScore = useMotionValue(0);
   const displayScore = useTransform(motionScore, (v) => Math.round(v));
@@ -37,9 +39,9 @@ export default function LeaseabilitySignal({
   }, [displayScore]);
 
   const getBarColor = (score: number) => {
-    if (score >= 70) return 'linear-gradient(90deg, #34C759, #30D158)';
-    if (score >= 40) return 'linear-gradient(90deg, #FF9500, #FFCC00)';
-    return 'linear-gradient(90deg, #FF3B30, #FF6961)';
+    if (score >= 70) return 'linear-gradient(90deg, #FFD60A, #FFCC00)';
+    if (score >= 40) return 'linear-gradient(90deg, #FFD60A, #FFB800)';
+    return 'linear-gradient(90deg, #FFC300, #FF9500)';
   };
 
   const getSignalLabel = (score: number) => {
@@ -77,8 +79,8 @@ export default function LeaseabilitySignal({
               <span
                 className="text-xs font-semibold px-2 py-0.5 rounded-full ml-1"
                 style={{
-                  background: breakdown.score >= 70 ? '#34C75920' : breakdown.score >= 40 ? '#FF950020' : '#FF3B3020',
-                  color: breakdown.score >= 70 ? '#34C759' : breakdown.score >= 40 ? '#FF9500' : '#FF3B30',
+                  background: leaseabilityAccentBg,
+                  color: leaseabilityAccent,
                 }}
               >
                 {getSignalLabel(breakdown.score)}

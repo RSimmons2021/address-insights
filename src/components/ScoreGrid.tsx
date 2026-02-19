@@ -21,8 +21,8 @@ export default function ScoreGrid({ walkScore, driveScore, urbanIndex }: ScoreGr
       <div className="grid grid-cols-3 gap-4">
         <ScoreOrb
           score={walkScore.score}
-          label={walkScore.label}
-          description={walkScore.description}
+          label="Walking Score"
+          description={`${walkScore.label} • ${walkScore.description}`}
           icon="🚶"
           color="var(--clay-green)"
           ingredients={walkScore.ingredients}
@@ -30,8 +30,8 @@ export default function ScoreGrid({ walkScore, driveScore, urbanIndex }: ScoreGr
         />
         <ScoreOrb
           score={driveScore.score}
-          label={driveScore.label}
-          description={driveScore.description}
+          label="Driving Score"
+          description={`${driveScore.label} • ${driveScore.description}`}
           icon="🚗"
           color="var(--clay-blue)"
           ingredients={driveScore.ingredients}
@@ -39,8 +39,8 @@ export default function ScoreGrid({ walkScore, driveScore, urbanIndex }: ScoreGr
         />
         <ScoreOrb
           score={urbanIndex.score}
-          label={urbanIndex.label}
-          description={urbanIndex.description}
+          label="Urban/Suburban Index"
+          description={`${urbanIndex.label} • ${urbanIndex.description}`}
           icon="🏙️"
           color="var(--clay-orange)"
           ingredients={urbanIndex.ingredients}
