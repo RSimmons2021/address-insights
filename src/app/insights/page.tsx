@@ -111,20 +111,25 @@ function InsightsContent() {
     <div className="h-screen flex flex-col lg:grid lg:grid-cols-[420px_1fr]" style={{ background: 'var(--bg-card)' }}>
       {/* Left Panel */}
       <div className="lg:h-screen overflow-y-auto p-6 lg:p-8 border-r custom-scrollbar flex flex-col gap-8" style={{ borderColor: 'var(--divider)' }}>
-        {/* Back button */}
-        <motion.button
-          onClick={() => router.push('/')}
-          className="flex items-center gap-2 text-sm font-semibold cursor-pointer self-start"
-          style={{ color: 'var(--text-secondary)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          whileHover={{ x: -3 }}
-        >
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Search
-        </motion.button>
+        {/* Top actions */}
+        <div className="flex items-center justify-between">
+          <motion.button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-sm font-semibold cursor-pointer self-start"
+            style={{ color: 'var(--text-secondary)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            whileHover={{ x: -3 }}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Search
+          </motion.button>
+          <div className="hidden lg:block">
+            <HistoryDrawer variant="pill" />
+          </div>
+        </div>
 
         {/* Address header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -203,7 +208,9 @@ function InsightsContent() {
         <div className="absolute top-6 right-6 flex gap-3 z-10">
           <DarkModeButton />
           <ShareButton />
-          <HistoryDrawer />
+          <div className="lg:hidden">
+            <HistoryDrawer />
+          </div>
         </div>
 
         {/* Map */}

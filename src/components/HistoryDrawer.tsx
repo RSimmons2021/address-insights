@@ -10,7 +10,11 @@ import {
   subscribeSearchHistory,
 } from '@/lib/history';
 
-export default function HistoryDrawer() {
+interface HistoryDrawerProps {
+  variant?: 'icon' | 'pill';
+}
+
+export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const history = useSyncExternalStore(
@@ -50,26 +54,67 @@ export default function HistoryDrawer() {
   return (
     <>
       {/* Toggle button */}
-      <motion.button
-        onClick={() => setOpen(!open)}
-        className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer"
-        style={{
-          background: 'var(--bg-card)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label="Search history"
-      >
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-primary)' }}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </motion.button>
+      {variant === 'pill' ? (
+        <motion.button
+          onClick={() => setOpen(!open)}
+          className="h-11 px-4 rounded-full flex items-center gap-2 cursor-pointer text-sm font-semibold"
+          style={{
+            background: 'var(--bg-surface)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--divider)',
+          }}
+          whileHover={{ y: -1 }}
+          whileTap={{ y: 0 }}
+          aria-label="Open search history"
+        >
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>History</span>
+          {history.length > 0 && (
+            <span
+              className="min-w-5 h-5 px-1 rounded-full text-[11px] font-bold inline-flex items-center justify-center"
+              style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
+            >
+              {Math.min(history.length, 99)}
+            </span>
+          )}
+        </motion.button>
+      ) : (
+        <motion.button
+          onClick={() => setOpen(!open)}
+          className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer"
+          style={{
+            background: 'var(--bg-card)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Search history"
+        >
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-primary)' }}>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </motion.button>
+      )}
 
       {/* Drawer overlay */}
       <AnimatePresence>
