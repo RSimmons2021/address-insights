@@ -180,7 +180,7 @@ export function computeLeaseabilityScore(
 
   // Walking
   if (walkScore.score >= 70) helps.push('High walkability score');
-  else hurts.push('Low walkability — car may be needed');
+  else hurts.push('Low walkability, car may be needed');
 
   // Groceries
   const groceries = nearbyAmenities.filter((a) => a.category === 'grocery');

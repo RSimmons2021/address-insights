@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Amenity, AMENITY_COLORS, AMENITY_ICONS } from '@/types';
+import { Amenity, AMENITY_COLORS, AMENITY_ICONS, CompareAddress } from '@/types';
 import { useTheme } from './ThemeProvider';
 
 interface AmenityMapProps {
@@ -13,7 +13,12 @@ interface AmenityMapProps {
   hoveredAmenityId: string | null;
   selectedAmenity: Amenity | null;
   addressLabel: string;
+  compareLocations?: CompareAddress[];
 }
+
+const COMPARE_PALETTE = ['#AF52DE', '#FF9500', '#34C759', '#5AC8FA', '#FF3B30', '#5856D6'];
+const COMPARE_SOURCE_ID = 'compare-overlays-source';
+const COMPARE_LAYER_ID = 'compare-overlays-layer';
 
 function createAddressPopupContent(addressLabel: string): HTMLDivElement {
   const wrapper = document.createElement('div');
@@ -38,6 +43,22 @@ function createAmenityPopupContent(amenity: Amenity): HTMLDivElement {
   return wrapper;
 }
 
+function createComparePopupContent(address: string, rank: number): HTMLDivElement {
+  const wrapper = document.createElement('div');
+  wrapper.style.padding = '4px 0';
+
+  const name = document.createElement('div');
+  name.style.cssText = 'font-weight:700;font-size:13px';
+  name.textContent = `Compare #${rank}`;
+
+  const meta = document.createElement('div');
+  meta.style.cssText = 'font-size:12px;color:#86868B;max-width:220px';
+  meta.textContent = address;
+
+  wrapper.append(name, meta);
+  return wrapper;
+}
+
 export default function AmenityMap({
   lat,
   lng,
@@ -45,11 +66,14 @@ export default function AmenityMap({
   hoveredAmenityId,
   selectedAmenity,
   addressLabel,
+  compareLocations = [],
 }: AmenityMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const compareMarkersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [styleVersion, setStyleVersion] = useState(0);
   const { isDark } = useTheme();
 
   const mapStyle = isDark
@@ -135,6 +159,7 @@ export default function AmenityMap({
     map.on('load', () => {
       setMapLoaded(true);
       addWalkRadius(map);
+      setStyleVersion((version) => version + 1);
       map.flyTo({ center: [lng, lat], zoom: 15, duration: 1500, essential: true });
     });
 
@@ -152,7 +177,10 @@ export default function AmenityMap({
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
     map.setStyle(mapStyle);
-    map.once('style.load', () => addWalkRadius(map));
+    map.once('style.load', () => {
+      addWalkRadius(map);
+      setStyleVersion((version) => version + 1);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDark]);
 
@@ -192,6 +220,108 @@ export default function AmenityMap({
       markersRef.current.set(amenity.id, marker);
     });
   }, [amenities, mapLoaded]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return;
+    const map = mapRef.current;
+    if (!map.isStyleLoaded()) return;
+
+    compareMarkersRef.current.forEach((marker) => marker.remove());
+    compareMarkersRef.current.clear();
+
+    const uniqueLocations = new Map<string, CompareAddress>();
+    compareLocations.forEach((location) => {
+      const key = location.address.trim().toLowerCase();
+      if (!key || uniqueLocations.has(key)) return;
+      if (Math.abs(location.lat - lat) < 0.000001 && Math.abs(location.lng - lng) < 0.000001) {
+        return;
+      }
+      uniqueLocations.set(key, location);
+    });
+
+    const compareList = Array.from(uniqueLocations.values()).slice(0, 10);
+    const compareFeatures = compareList.map((location, index) => ({
+      type: 'Feature' as const,
+      properties: {
+        color: COMPARE_PALETTE[index % COMPARE_PALETTE.length],
+      },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [location.lng, location.lat] as [number, number],
+      },
+    }));
+
+    if (map.getSource(COMPARE_SOURCE_ID)) {
+      const source = map.getSource(COMPARE_SOURCE_ID) as mapboxgl.GeoJSONSource;
+      source.setData({
+        type: 'FeatureCollection',
+        features: compareFeatures,
+      });
+    } else {
+      map.addSource(COMPARE_SOURCE_ID, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: compareFeatures,
+        },
+      });
+    }
+
+    if (!map.getLayer(COMPARE_LAYER_ID)) {
+      map.addLayer({
+        id: COMPARE_LAYER_ID,
+        type: 'circle',
+        source: COMPARE_SOURCE_ID,
+        paint: {
+          'circle-radius': {
+            stops: [
+              [0, 0],
+              [20, metersToPixels(500, lat, 20)],
+            ],
+            base: 2,
+          },
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.08,
+          'circle-stroke-color': ['get', 'color'],
+          'circle-stroke-opacity': 0.2,
+          'circle-stroke-width': 1.2,
+        },
+      });
+    }
+
+    compareList
+      .forEach((location, index) => {
+        const color = COMPARE_PALETTE[index % COMPARE_PALETTE.length];
+        const markerEl = document.createElement('div');
+        markerEl.style.cssText = `
+          width: 26px;
+          height: 26px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          color: ${isDark ? '#111113' : '#FFFFFF'};
+          background: ${color};
+          border: 2px solid ${isDark ? '#111113' : '#FFFFFF'};
+          box-shadow: 0 0 0 6px ${color}33, 0 6px 16px rgba(0,0,0,0.25);
+          cursor: pointer;
+        `;
+        markerEl.textContent = `${index + 1}`;
+
+        const popup = new mapboxgl.Popup({ offset: 15, closeButton: false }).setDOMContent(
+          createComparePopupContent(location.address, index + 1)
+        );
+
+        const marker = new mapboxgl.Marker({ element: markerEl })
+          .setLngLat([location.lng, location.lat])
+          .setPopup(popup)
+          .addTo(map);
+
+        compareMarkersRef.current.set(location.address, marker);
+      });
+  }, [compareLocations, mapLoaded, lat, lng, isDark, styleVersion]);
 
   // Handle hover highlight
   useEffect(() => {

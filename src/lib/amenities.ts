@@ -1,7 +1,13 @@
 import { Amenity, AmenityCategory } from '@/types';
 
 // Use Overpass API (OpenStreetMap) - free, no API key required
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+const REQUEST_TIMEOUT_MS = 18000;
+const MAX_RETRIES_PER_ENDPOINT = 2;
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
 // Map OSM tags to our categories
 const OSM_QUERIES: { category: AmenityCategory; tags: string }[] = [
@@ -50,48 +56,50 @@ export async function fetchNearbyAmenities(
     out body 100;
   `;
 
-  try {
-    const res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
-    });
+  for (const endpoint of OVERPASS_URLS) {
+    for (let attempt = 1; attempt <= MAX_RETRIES_PER_ENDPOINT; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-    if (!res.ok) {
-      console.error('Overpass API error:', res.status);
-      return [];
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          if (RETRYABLE_STATUS_CODES.has(res.status) && attempt < MAX_RETRIES_PER_ENDPOINT) {
+            await sleep(350 * attempt);
+            continue;
+          }
+
+          if (RETRYABLE_STATUS_CODES.has(res.status)) {
+            break;
+          }
+
+          console.warn('Overpass API non-retryable error:', res.status);
+          return [];
+        }
+
+        const data = await res.json();
+        return parseAmenities(data, lat, lng);
+      } catch {
+        clearTimeout(timeoutId);
+
+        if (attempt < MAX_RETRIES_PER_ENDPOINT) {
+          await sleep(350 * attempt);
+          continue;
+        }
+      }
     }
-
-    const data = await res.json();
-    const elements = data.elements || [];
-
-    const amenities: Amenity[] = elements
-      .map((el: Record<string, unknown>, idx: number) => {
-        const tags = (el.tags || {}) as Record<string, string>;
-        const category = categorizeOSMElement(tags);
-        if (!category) return null;
-
-        const elLat = el.lat as number;
-        const elLng = el.lon as number;
-        const distance = haversineDistance(lat, lng, elLat, elLng);
-
-        return {
-          id: `${el.id || idx}`,
-          name: tags.name || `${category.charAt(0).toUpperCase() + category.slice(1)}`,
-          category,
-          lat: elLat,
-          lng: elLng,
-          distance: Math.round(distance),
-        };
-      })
-      .filter((a: Amenity | null): a is Amenity => a !== null && a.name !== a.category)
-      .sort((a: Amenity, b: Amenity) => a.distance - b.distance);
-
-    return amenities;
-  } catch (err) {
-    console.error('Failed to fetch amenities:', err);
-    return [];
   }
+
+  console.warn('Overpass API unavailable after retries on all endpoints.');
+  return [];
 }
 
 function categorizeOSMElement(tags: Record<string, string>): AmenityCategory | null {
@@ -104,4 +112,34 @@ function categorizeOSMElement(tags: Record<string, string>): AmenityCategory | n
   if (tags.amenity === 'pharmacy') return 'pharmacy';
   if (tags.amenity === 'school') return 'school';
   return null;
+}
+
+function parseAmenities(data: Record<string, unknown>, lat: number, lng: number): Amenity[] {
+  const elements = (data.elements as Record<string, unknown>[] | undefined) || [];
+
+  return elements
+    .map((el: Record<string, unknown>, idx: number) => {
+      const tags = (el.tags || {}) as Record<string, string>;
+      const category = categorizeOSMElement(tags);
+      if (!category) return null;
+
+      const elLat = el.lat as number;
+      const elLng = el.lon as number;
+      const distance = haversineDistance(lat, lng, elLat, elLng);
+
+      return {
+        id: `${el.id || idx}`,
+        name: tags.name || `${category.charAt(0).toUpperCase() + category.slice(1)}`,
+        category,
+        lat: elLat,
+        lng: elLng,
+        distance: Math.round(distance),
+      };
+    })
+    .filter((a: Amenity | null): a is Amenity => a !== null && a.name !== a.category)
+    .sort((a: Amenity, b: Amenity) => a.distance - b.distance);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

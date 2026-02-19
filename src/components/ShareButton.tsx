@@ -2,25 +2,62 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createSnapshot } from '@/lib/snapshots';
+import { InsightSnapshotPayload } from '@/types';
 
-export default function ShareButton() {
-  const [copied, setCopied] = useState(false);
+interface ShareButtonProps {
+  snapshotPayload?: InsightSnapshotPayload | null;
+}
 
-  const handleShare = async () => {
+export default function ShareButton({ snapshotPayload }: ShareButtonProps) {
+  const [message, setMessage] = useState<string | null>(null);
+  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
+
+  const showMessage = (text: string) => {
+    setMessage(text);
+    window.setTimeout(() => setMessage(null), 2400);
+  };
+
+  const copyText = async (value: string) => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(value);
     } catch {
-      // Fallback
       const input = document.createElement('input');
-      input.value = window.location.href;
+      input.value = value;
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShare = async () => {
+    const fallbackUrl = window.location.href;
+
+    try {
+      let shareUrl = fallbackUrl;
+      let successMessage = 'Link copied!';
+
+      if (snapshotPayload) {
+        setIsSavingSnapshot(true);
+        const snapshot = await createSnapshot(snapshotPayload);
+        shareUrl = `${window.location.origin}/insights?snapshot=${snapshot.id}`;
+        successMessage = 'Snapshot link copied!';
+      }
+
+      await copyText(shareUrl);
+      showMessage(successMessage);
+    } catch (error) {
+      try {
+        await copyText(fallbackUrl);
+        showMessage('Snapshot unavailable. Copied live link.');
+      } catch {
+        showMessage(
+          error instanceof Error ? error.message : 'Share failed. Please try again.'
+        );
+      }
+    } finally {
+      setIsSavingSnapshot(false);
     }
   };
 
@@ -36,6 +73,8 @@ export default function ShareButton() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Share this page"
+        disabled={isSavingSnapshot}
+        aria-disabled={isSavingSnapshot}
       >
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-primary)' }}>
           <path
@@ -48,7 +87,7 @@ export default function ShareButton() {
       </motion.button>
 
       <AnimatePresence>
-        {copied && (
+        {message && (
           <motion.div
             initial={{ opacity: 0, y: 5, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -60,7 +99,7 @@ export default function ShareButton() {
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
             }}
           >
-            Link copied!
+            {message}
           </motion.div>
         )}
       </AnimatePresence>

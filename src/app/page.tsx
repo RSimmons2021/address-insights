@@ -3,7 +3,9 @@
 import { motion } from 'framer-motion';
 import SearchBar from '@/components/SearchBar';
 import RecentSearches from '@/components/RecentSearches';
+import HistoryDrawer from '@/components/HistoryDrawer';
 import DarkModeButton from '@/components/DarkModeButton';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function LandingPage() {
   return (
@@ -13,8 +15,12 @@ export default function LandingPage() {
         background: 'linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
       }}
     >
-      {/* Dark mode toggle */}
-      <div className="fixed top-6 right-6 z-50">
+      {/* Top actions */}
+      <div className="fixed top-6 left-6 z-50">
+        <BrandLogo />
+      </div>
+      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <HistoryDrawer />
         <DarkModeButton />
       </div>
       {/* Hero orbs */}
@@ -78,7 +84,7 @@ export default function LandingPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        Type an address and get a neighborhood pulse &mdash; scores, amenities, and leaseability insights.
+        Type an address and get a neighborhood pulse with scores, amenities, and leaseability insights.
       </motion.p>
 
       {/* Search */}

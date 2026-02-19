@@ -16,7 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Address Insights | Neighborhood Pulse',
   description:
-    'Type an address and get instant neighborhood insights — walking score, driving score, urban index, leaseability signal, and nearby amenities on an interactive map.',
+    'Type an address and get instant neighborhood insights with walking score, driving score, urban index, leaseability signal, and nearby amenities on an interactive map.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
+    shortcut: '/favicon.ico',
+  },
   openGraph: {
     title: 'Address Insights | Neighborhood Pulse',
     description: 'Get instant neighborhood insights for any address.',

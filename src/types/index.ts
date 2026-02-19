@@ -47,6 +47,39 @@ export interface LeaseabilityBreakdown {
   hurts: string[];
 }
 
+export interface CompareAddress {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+export interface CompareAddressMetrics extends CompareAddress {
+  walkScore: number;
+  driveScore: number;
+  urbanIndex: number;
+  leaseability: number;
+  amenityCount: number;
+}
+
+export interface InsightSnapshotPayload {
+  version: 1;
+  createdAt: string;
+  insight: {
+    address: string;
+    lat: number;
+    lng: number;
+    amenities: Amenity[];
+    walkScore: ScoreBreakdown;
+    driveScore: ScoreBreakdown;
+    urbanIndex: ScoreBreakdown;
+    leaseability: LeaseabilityBreakdown;
+  };
+  compare: {
+    selected: CompareAddress[];
+    metrics: CompareAddressMetrics[];
+  };
+}
+
 export interface SearchHistoryItem {
   address: string;
   lat: number;

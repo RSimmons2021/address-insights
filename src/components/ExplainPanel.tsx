@@ -77,7 +77,7 @@ export default function ExplainPanel() {
               <div className="pt-2 border-t" style={{ borderColor: 'var(--divider)' }}>
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   Amenity data from OpenStreetMap via Overpass API. Scores are heuristic-based
-                  and directional &mdash; not predictive. Map data from Mapbox.
+                  and directional, not predictive. Map data from Mapbox.
                 </p>
               </div>
             </div>

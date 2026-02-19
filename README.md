@@ -12,7 +12,8 @@ Type any US street address and instantly get a neighborhood pulse:
 - **Leaseability Signal** — composite metric estimating rental attractiveness with "Helps/Hurts" breakdown
 - **Interactive Map** — Mapbox GL with amenity markers, walking radius overlay, and fly-to animations
 - **Search History** — stored in localStorage, accessible from a slide-out drawer
-- **Shareable Pages** — URL contains all state, so sharing a link shows the same insights
+- **Snapshot Share Links** — sharing creates a snapshot ID in Postgres/Supabase so links are stable over time
+- **Portfolio Compare Mode** — compare 2-10 addresses side by side with score deltas and map overlays
 
 ## What I Built vs AI
 
@@ -40,9 +41,21 @@ Type any US street address and instantly get a neighborhood pulse:
 ```bash
 npm install
 cp .env.example .env.local
-# Add your Mapbox token to .env.local
+# Add your Mapbox + Supabase values to .env.local
 npm run dev
 ```
+
+### Snapshot Table (Supabase SQL)
+
+```sql
+create table if not exists public.shared_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  payload jsonb not null,
+  created_at timestamptz not null default now()
+);
+```
+
+If you use a different table name, set `SUPABASE_SNAPSHOTS_TABLE` in `.env.local`.
 
 ## Tech Stack
 

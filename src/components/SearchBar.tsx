@@ -9,30 +9,39 @@ import { GeocodeSuggestion } from '@/types';
 
 export default function SearchBar() {
   const router = useRouter();
+  const inputId = useId();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
+  const queryHasAddressNumber = /\d/.test(query);
 
   const fetchSuggestions = useCallback(async (q: string) => {
     if (q.length < 3) {
       setSuggestions([]);
+      setShowSuggestions(false);
+      setHasSearched(false);
       return;
     }
     setLoading(true);
+    setHasSearched(false);
     try {
       const results = await searchAddresses(q);
       setSuggestions(results);
-      setShowSuggestions(results.length > 0);
+      setShowSuggestions(true);
     } catch (err) {
       console.error('Autocomplete error:', err);
       setSuggestions([]);
+    } finally {
+      setHasSearched(true);
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -46,6 +55,7 @@ export default function SearchBar() {
   const navigateToInsights = (placeName: string, lat: number, lng: number) => {
     addToHistory({ address: placeName, lat, lng });
     setShowSuggestions(false);
+    setStatusMessage(null);
     const params = new URLSearchParams({
       address: placeName,
       lat: lat.toString(),
@@ -74,11 +84,11 @@ export default function SearchBar() {
       if (result) {
         navigateToInsights(result.displayName, result.lat, result.lng);
       } else {
-        // Show inline feedback if geocode fails
-        console.warn('No results found for:', query);
+        setStatusMessage('No results found. Try adding city and state.');
       }
     } catch (err) {
       console.error('Search error:', err);
+      setStatusMessage('Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -105,6 +115,13 @@ export default function SearchBar() {
 
   return (
     <div className="w-full max-w-[600px] relative z-20">
+      <label
+        htmlFor={inputId}
+        className="block text-sm font-semibold mb-3 px-2"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        Address search
+      </label>
       <motion.div
         className="w-full h-[72px] flex items-center px-6 border border-white/50"
         style={{
@@ -131,6 +148,7 @@ export default function SearchBar() {
           />
         </svg>
         <input
+          id={inputId}
           ref={inputRef}
           type="text"
           placeholder="Enter an address, neighborhood, or city"
@@ -138,9 +156,12 @@ export default function SearchBar() {
           onChange={(e) => {
             setQuery(e.target.value);
             setSelectedIndex(-1);
+            setStatusMessage(null);
+            setHasSearched(false);
+            if (e.target.value.trim().length >= 3) setShowSuggestions(true);
           }}
           onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => query.trim().length >= 3 && setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           className="flex-1 border-none bg-transparent text-xl font-medium outline-none placeholder:text-[var(--text-secondary)]"
           style={{ color: 'var(--text-primary)' }}
@@ -163,6 +184,8 @@ export default function SearchBar() {
           style={{ background: 'var(--color-inverse-bg)' }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
+          disabled={loading || !query.trim()}
+          aria-disabled={loading || !query.trim()}
           aria-label="Search"
         >
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-inverse-text)' }}>
@@ -177,7 +200,9 @@ export default function SearchBar() {
       </motion.div>
 
       <AnimatePresence>
-        {showSuggestions && suggestions.length > 0 && (
+        {showSuggestions &&
+          query.trim().length >= 3 &&
+          (suggestions.length > 0 || loading || (hasSearched && queryHasAddressNumber)) && (
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -193,35 +218,63 @@ export default function SearchBar() {
             }}
             id={listboxId}
             role="listbox"
+            aria-label="Address suggestions"
           >
-            {suggestions.map((s, i) => (
-              <motion.div
-                id={`${listboxId}-option-${i}`}
-                key={s.id}
-                onClick={() => handleSelectSuggestion(s)}
-                className="px-6 py-4 cursor-pointer flex items-center gap-3 transition-colors"
-                style={{
-                  background: i === selectedIndex ? 'var(--bg-surface)' : 'transparent',
-                  borderBottom: i < suggestions.length - 1 ? '1px solid var(--divider)' : 'none',
-                }}
-                whileHover={{ backgroundColor: 'var(--bg-surface)' }}
-                role="option"
-                aria-selected={i === selectedIndex}
-              >
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
-                  style={{ background: 'var(--bg-surface)' }}
+            {suggestions.length > 0 ? (
+              suggestions.map((s, i) => (
+                <motion.button
+                  id={`${listboxId}-option-${i}`}
+                  key={s.id}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => handleSelectSuggestion(s)}
+                  className="w-full px-6 py-4 cursor-pointer flex items-center gap-3 transition-colors text-left"
+                  style={{
+                    background: i === selectedIndex ? 'var(--bg-surface)' : 'transparent',
+                    borderBottom: i < suggestions.length - 1 ? '1px solid var(--divider)' : 'none',
+                  }}
+                  whileHover={{ backgroundColor: 'var(--bg-surface)' }}
+                  role="option"
+                  aria-selected={i === selectedIndex}
                 >
-                  📍
-                </div>
-                <span className="text-[15px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                  {s.placeName}
-                </span>
-              </motion.div>
-            ))}
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
+                    style={{ background: 'var(--bg-surface)' }}
+                  >
+                    📍
+                  </div>
+                  <span className="text-[15px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                    {s.placeName}
+                  </span>
+                </motion.button>
+              ))
+            ) : loading ? (
+              <div className="px-6 py-5 text-sm flex items-center gap-3" style={{ color: 'var(--text-secondary)' }}>
+                <div className="w-4 h-4 border-2 border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />
+                <p role="status" aria-live="polite">Searching suggestions...</p>
+              </div>
+            ) : (
+              <div className="px-6 py-5 text-sm flex items-center gap-3" style={{ color: 'var(--text-secondary)' }}>
+                <span aria-hidden="true">🔎</span>
+                <p role="status" aria-live="polite">
+                  No suggestions for &quot;{query.trim()}&quot;. Press Enter to run a full search.
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {statusMessage && (
+        <p
+          className="mt-3 px-4 text-sm"
+          style={{ color: 'var(--text-secondary)' }}
+          role="status"
+          aria-live="polite"
+        >
+          {statusMessage}
+        </p>
+      )}
     </div>
   );
 }

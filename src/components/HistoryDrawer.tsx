@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,9 +12,25 @@ import {
 
 interface HistoryDrawerProps {
   variant?: 'icon' | 'pill';
+  maxItems?: number;
 }
 
-export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) {
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+
+function subscribeViewport(onStoreChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const media = window.matchMedia(MOBILE_MEDIA_QUERY);
+  const handleChange = () => onStoreChange();
+  media.addEventListener('change', handleChange);
+  return () => media.removeEventListener('change', handleChange);
+}
+
+function getViewportSnapshot(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
+
+export default function HistoryDrawer({ variant = 'icon', maxItems }: HistoryDrawerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const history = useSyncExternalStore(
@@ -22,6 +38,8 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
     getSearchHistory,
     getSearchHistoryServerSnapshot
   );
+  const isMobile = useSyncExternalStore(subscribeViewport, getViewportSnapshot, () => false);
+  const visibleHistory = typeof maxItems === 'number' ? history.slice(0, maxItems) : history;
 
   const handleClick = (item: (typeof history)[number]) => {
     const params = new URLSearchParams({
@@ -50,6 +68,15 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
       minute: '2-digit',
     });
   };
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   return (
     <>
@@ -129,16 +156,24 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
               onClick={() => setOpen(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              initial={isMobile ? { y: '100%' } : { x: '100%' }}
+              animate={isMobile ? { y: 0 } : { x: 0 }}
+              exit={isMobile ? { y: '100%' } : { x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-[360px] max-w-[90vw] z-50 flex flex-col"
+              className={
+                isMobile
+                  ? 'fixed bottom-0 left-0 right-0 h-[78vh] max-h-[86vh] z-50 flex flex-col rounded-t-[28px]'
+                  : 'fixed top-0 right-0 h-full w-[360px] max-w-[90vw] z-50 flex flex-col'
+              }
               style={{
                 background: 'var(--bg-overlay)',
                 backdropFilter: 'blur(30px)',
                 boxShadow: '-20px 0 60px rgba(0,0,0,0.1)',
+                borderTop: isMobile ? '1px solid var(--divider)' : 'none',
               }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Recent search history"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'var(--divider)' }}>
@@ -159,7 +194,7 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
 
               {/* List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {history.length === 0 && (
+                {visibleHistory.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-full gap-3">
                     <span className="text-3xl">🔍</span>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -167,7 +202,7 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
                     </p>
                   </div>
                 )}
-                {history.map((item, i) => (
+                {visibleHistory.map((item, i) => (
                   <motion.button
                     key={item.timestamp}
                     initial={{ opacity: 0, x: 20 }}
@@ -197,7 +232,7 @@ export default function HistoryDrawer({ variant = 'icon' }: HistoryDrawerProps) 
               </div>
 
               {/* Footer */}
-              {history.length > 0 && (
+              {visibleHistory.length > 0 && (
                 <div className="p-4 border-t" style={{ borderColor: 'var(--divider)' }}>
                   <button
                     onClick={handleClear}
