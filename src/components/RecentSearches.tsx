@@ -3,7 +3,11 @@
 import { useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { getSearchHistory, subscribeSearchHistory } from '@/lib/history';
+import {
+  getSearchHistory,
+  getSearchHistoryServerSnapshot,
+  subscribeSearchHistory,
+} from '@/lib/history';
 
 const DEFAULT_SUGGESTIONS = [
   { label: 'Hayes Valley, SF', address: 'Hayes Valley, San Francisco, CA', lat: 37.7759, lng: -122.4245 },
@@ -13,7 +17,11 @@ const DEFAULT_SUGGESTIONS = [
 
 export default function RecentSearches() {
   const router = useRouter();
-  const history = useSyncExternalStore(subscribeSearchHistory, getSearchHistory, () => []);
+  const history = useSyncExternalStore(
+    subscribeSearchHistory,
+    getSearchHistory,
+    getSearchHistoryServerSnapshot
+  );
 
   const navigateTo = (address: string, lat: number, lng: number) => {
     const params = new URLSearchParams({

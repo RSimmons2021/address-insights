@@ -3,12 +3,21 @@
 import { useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getSearchHistory, clearHistory, subscribeSearchHistory } from '@/lib/history';
+import {
+  getSearchHistory,
+  getSearchHistoryServerSnapshot,
+  clearHistory,
+  subscribeSearchHistory,
+} from '@/lib/history';
 
 export default function HistoryDrawer() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const history = useSyncExternalStore(subscribeSearchHistory, getSearchHistory, () => []);
+  const history = useSyncExternalStore(
+    subscribeSearchHistory,
+    getSearchHistory,
+    getSearchHistoryServerSnapshot
+  );
 
   const handleClick = (item: (typeof history)[number]) => {
     const params = new URLSearchParams({
