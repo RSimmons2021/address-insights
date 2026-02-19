@@ -1,66 +1,33 @@
 # Address Insights
 
-**Live App:** [Deployed on Vercel](https://your-app-url.vercel.app) _(update after deployment)_
+**Live App (Vercel):** https://address-insights-pi.vercel.app/ 
 
-## What It Does
+## What I Personally Built vs AI
 
-Type any US street address and instantly get a neighborhood pulse:
+**I built:**
+- Product/UX scope and architecture decisions
+- Scoring logic (Walking, Driving, Urban/Suburban, Leaseability)
+- Data flow between search, insights, compare mode, map, and sharing
+- Snapshot sharing model (stable IDs in Supabase) and API contract
+- Feature behavior and edge-case handling (history, compare limits, fallback states)
 
-- **Walking Score** (0-100) — weighted count of amenities within 800m
-- **Driving Score** (0-100) — same heuristic at 3km radius
-- **Urban/Suburban Index** — density-based classification
-- **Leaseability Signal** — composite metric estimating rental attractiveness with "Helps/Hurts" breakdown
-- **Interactive Map** — Mapbox GL with amenity markers, walking radius overlay, and fly-to animations
-- **Search History** — stored in localStorage, accessible from a slide-out drawer
-- **Snapshot Share Links** — sharing creates a snapshot ID in Postgres/Supabase so links are stable over time
-- **Portfolio Compare Mode** — compare 2-10 addresses side by side with score deltas and map overlays
+**AI-assisted:**
+- Some UI/component boilerplate
+- Tailwind class scaffolding and animation syntax assistance
+- Minor refactor/code generation acceleration
 
-## What I Built vs AI
+## My Approach
 
-- **My work:** Architecture decisions, design system (color palette, clay morphism, animation specs), scoring heuristics and weights, component decomposition, data flow, UX decisions (what to show, where, why), Leaseability Signal concept, Overpass API integration strategy
-- **AI-assisted:** Boilerplate code generation, Tailwind class composition, SVG icons, Framer Motion animation syntax, Mapbox GL marker setup
+1. Start with the user goal: quickly evaluate an address for leasing decisions.
+2. Use real external data (Mapbox + Overpass) and keep scoring transparent.
+3. Build required features first (scores, map, history, shareability), then extend with compare mode.
+4. Keep implementation pragmatic: clear contracts, typed payloads, production-style env config.
 
-## Approach
+## Assumptions and Design Decisions
 
-1. Started with design principles: Apple restraint + Google Maps clarity + playful gradients
-2. Chose Overpass API (OpenStreetMap) for amenities — free, no API key, real data
-3. Kept scoring heuristics simple and transparent: weighted amenity counts with diminishing returns
-4. Used URL query params (`?address=...&lat=...&lng=...`) for shareability
-5. Split-panel layout: left for data/scores, right for map — synced via hover/click
-
-## Assumptions & Design Decisions
-
-- US addresses only (Mapbox geocoding filtered to `country=us`)
-- Walking radius = 800m, driving radius = 3km (standard urban planning benchmarks)
-- Diminishing returns on amenity counts (first grocery store matters more than the 5th)
-- Leaseability Signal is intentionally directional, not predictive — explained in UI
-- Ops View toggle on Leaseability shows the raw weights for transparency
-
-## Setup
-
-```bash
-npm install
-cp .env.example .env.local
-# Add your Mapbox + Supabase values to .env.local
-npm run dev
-```
-
-### Snapshot Table (Supabase SQL)
-
-```sql
-create table if not exists public.shared_snapshots (
-  id uuid primary key default gen_random_uuid(),
-  payload jsonb not null,
-  created_at timestamptz not null default now()
-);
-```
-
-If you use a different table name, set `SUPABASE_SNAPSHOTS_TABLE` in `.env.local`.
-
-## Tech Stack
-
-- Next.js 14 (App Router) + TypeScript
-- Tailwind CSS
-- Framer Motion
-- Mapbox GL JS
-- Overpass API (OpenStreetMap)
+- US-focused address search.
+- Heuristic scores are directional, not predictive.
+- Walking radius uses a tighter local range; driving uses a larger radius.
+- Search history is local-only (`localStorage`) by design.
+- Shared links support stable snapshots via Supabase (`shared_snapshots`).
+- Compare mode is limited to 2-10 addresses for UI clarity and performance.
