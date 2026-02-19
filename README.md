@@ -12,9 +12,9 @@
 - Feature behavior and edge-case handling (history, compare limits, fallback states)
 
 **AI-assisted:**
-- Some UI/component boilerplate
-- Tailwind class scaffolding and animation syntax assistance
-- Minor refactor/code generation acceleration
+- Some UI/components
+- Tailwind class scaffolding and Framer Motion animation implementation
+- Code generation acceleration
 
 ## My Approach
 
